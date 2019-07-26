@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>简单弹幕实现</title>
+	<meta charset="utf-8">
+	<script type="text/javascript" src=js/tool.js></script>
+	<script type="text/javascript" src=js/barrage.js></script>
+	<style type="text/css">
+	    .content {
+	    	position: relative
+	    }
+		#video {
+			position: absolute;
+			left: 0;
+			top: 0;
+		}
+		#canvas {
+			position: absolute;
+			left: 0;
+			top: 0;
+		}
+		.btn {
+			position: absolute;
+			top: 400px;
+		}
+		#input {
+			width: 400px;
+		}
+	</style>
+</head>
+<body>
+	<div class="content">
+		<video id="video" controls="controls" preload="auto" src="video/video.mp4"></video>
+		<canvas id="canvas" width="672" height="300"></canvas>
+	</div>
+	
+	<div class="btn">
+  		<input id="input" placeholder="弹幕发送">
+  		<button onclick="sendMessage()">发送</button>
+  	</div>
+</body>
+
+<script type="text/javascript">
+	var cnv = $$("canvas");	// 获取canvas对象
+	var cxt = cnv.getContext("2d"); // 获取上下文对象context
+	var video = $$("video");
+	var barrageList = []; // 弹幕列表
+	var isplay = true; // 视频是否播放
+
+	window.onload = function() {
+		barrageList = [];
+		$$("input").value = '';
+	}
+
+
+	// 发送弹幕
+	function sendMessage() {
+		let msg = $$("input").value;
+		if (msg !== '') {
+			sendBarrage(msg);
+			$$("input").value = '';
+		} else {
+			alert('弹幕内容不可为空');
+		}
+		
+	}
+
+	/**
+	* 回车键发送弹幕
+	*/
+	$$("input").addEventListener('keydown', (e) => {
+		if (event.keyCode == "13") {
+			sendMessage();
+		}
+	})
+
+	/**
+	* 点击画布播放/暂停视频
+	*/
+	cnv.addEventListener("click", (e) => {
+		isplay ? video.play() : video.pause();
+		isplay = !isplay;
+	})
+
+	/**
+	* 弹幕发送
+	* @params {String} value 弹幕内容
+	*/
+	function sendBarrage(value) {
+		let data = {
+			value: value
+		};
+		let barrage = new Barrage(cnv, cxt, data);
+		barrageList.push(barrage);
+		// 停止动画
+		window.cancelAnimationFrame(stop);
+		(function frame() {
+			stop = window.requestAnimationFrame(frame);
+			cxt.clearRect(0, 0, cnv.width, cnv.height); 
+			barrageList.forEach(item => {
+				if (item.x < -200) {
+					let index = barrageList.indexOf(item);
+					barrageList.splice(index, 1);
+				}
+				item.draw();
+			})
+		})();
+	}
+    
+    // 根据id获取元素
+	function $$(id){
+	    return document.getElementById(id);
+	}
+
+</script>
+</html>
